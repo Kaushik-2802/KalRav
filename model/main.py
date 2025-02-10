@@ -5,16 +5,46 @@ from ner_model import extract_mental_health_concerns, classify_concern, score_in
 from timeline_analysis import TimelineSentimentAnalyzer
 from pymongo import MongoClient
 import datetime
+import google.generativeai as genai
 
 app = Flask(__name__)
 CORS(app)
 
+genai.configure(api_key="AIzaSyDtGmDCcWiNHm5NBk4KWrWFr8-xUNYlIPE")
+chat_sessions = {}
 # Initialize MongoDB Connection
 client = MongoClient("mongodb://localhost:27017/")
 db = client["mental_health_db"]
 collection = db["user_inputs"]
 
 timeline_analyzer = TimelineSentimentAnalyzer()
+INITIAL_QUESTION = "Hi! Let's begin. How are you feeling today?"
+
+# @app.route('/api/conversational_chat', methods=['POST'])
+# def conversational_chat():
+#     data = request.json
+#     session_id = data.get("session_id")  # Unique session ID for the user
+#     user_response = data.get("sentence")
+
+#     # Initialize session if not exists
+#     if session_id not in chat_sessions:
+#         chat_sessions[session_id] = [{"role": "bot", "text": INITIAL_QUESTION}]
+
+#     conversation = chat_sessions[session_id]
+
+#     # Append user response
+#     conversation.append({"role": "user", "text": user_response})
+
+#     # Generate next chatbot response
+#     model = genai.GenerativeModel("gemini-pro")
+#     prompt = "\n".join([f"{m['role']}: {m['text']}" for m in conversation])
+#     response = model.generate_content(prompt)
+#     chatbot_reply = response.text.strip()
+
+#     # Append chatbot response
+#     conversation.append({"role": "bot", "text": chatbot_reply})
+
+#     return jsonify({"response_message": chatbot_reply, "conversation": conversation})
 
 @app.route('/api/process_input', methods=['POST'])
 def process_input():
@@ -77,19 +107,28 @@ def get_graph():
 @app.route('/api/intensity-history', methods=['GET'])
 def get_history():
     """
-    Fetch historical data for plotting the sentiment trend.
+    Fetch historical intensity scores for plotting trend data.
     """
-    history = list(collection.find({}, {"_id": 0, "timestamp": 1, "sentiment": 1}))
+    history = list(collection.find({}, {"_id": 0, "timestamp": 1, "intensity_scores": 1}))
 
-    # Convert timestamps to string format
+    formatted_history = []
+    
     for entry in history:
-        entry["timestamp"] = entry["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+        timestamp_str = entry["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+        intensity_scores = entry.get("intensity_scores", {})
 
-    if history:
-        return jsonify({"history": history})
+        # Convert intensity_scores dictionary into a list of { concern, score }
+        formatted_scores = [{"concern": concern, "score": score} for concern, score in intensity_scores.items()]
+
+        formatted_history.append({
+            "timestamp": timestamp_str,
+            "intensity_scores": formatted_scores
+        })
+
+    if formatted_history:
+        return jsonify({"history": formatted_history})
     else:
         return jsonify({"error": "No historical data available."})
-
 
 def generate_response_based_on_sentiment(sentiment):
     """

@@ -33,7 +33,7 @@ def train_ner(training_data, model_output_path="mental_health_ner"):
     nlp.initialize()
     optimizer = nlp.create_optimizer()
 
-    for i in range(30): 
+    for i in range(50): 
         losses = {}
         nlp.update(examples, drop=0.3, losses=losses)
         print(f"Iteration {i + 1}, Loss: {losses}")
