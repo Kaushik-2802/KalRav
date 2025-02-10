@@ -12,7 +12,7 @@ function ChatPage() {
   const [currentMessage, setCurrentMessage] = useState('');
   const [analysisData, setAnalysisData] = useState(null);
   const [activeChat, setActiveChat] = useState(1);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-preview-02-05" });
 
   // Load chats from localStorage on component mount
   const [chats, setChats] = useState(() => {
@@ -30,14 +30,14 @@ function ChatPage() {
             messages: [
               { 
                 id: 1, 
-                text: "Hi there! How are you feeling today?", 
+                text: "Hello how are you doing today? I am here to help you with your mental health.", 
                 sender: "other", 
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
               }
             ]
           }
         ];
-  });
+  },[]);
 
   // Save chats to localStorage whenever chats state changes
   useEffect(() => {
@@ -82,7 +82,7 @@ function ChatPage() {
     console.log(response.data);
 
       // Initial context prompt for Gemini
-      const contextPrompt = "You now need to act like a professional mental health expert and figure out all the emotions of the user by asking a set of questions one by one (have a genuine and purposeful conversation and DO NOT ASK ALL OF YOUR QUESTIONS AT ONCE), so ask the questions carefully so you can extract feelings from the user. Once you believe the conversation is worth ending, say thank you and ask the user to generate their report but before that keep your messages concise, do not give any recommendations on what to do just do your best to discover the emotions of the user.";
+      const contextPrompt = "You now need to act like a mental health expert and figure out all the emotions of the user by asking a set of questions one by one (have a genuine and purposeful conversation and DO NOT ASK ALL OF YOUR QUESTIONS AT ONCE), so ask the questions carefully so you can extract feelings from the user. Once you believe the conversation is worth ending, say thank you and ask the user to generate their report but before that keep your messages CONCISE AND EASY TO UNDERSTAND, do not give any solutions to the users query just persist to figure out the emotions of the user. KEEP YOUR RESPONSES TO THE USER SHORT AND ASK SUBSEQUENT QUESTIONS UNITLL YOU BELIEVE THE CONVERSATION IS WORTH ENDING";
 
       // Send the context prompt or the user's message to Gemini
       const prompt = activeConversation.messages.length === 1 ? contextPrompt : userMessage.text;
@@ -241,7 +241,7 @@ function ChatPage() {
           {analysisData && (
            <button 
             className="bg-purple-800 text-white text-2xl p-2 rounded-lg mx-auto inline-flex justify-center" 
-            onClick={() => navigate("/report", { state: { analysisData } })}
+            onClick={() => navigate("/report")}
                >
              <img src={brainwaveSymbol}  className="w-10 h-10 rounded-full object-cover mr-1" />
              <div className="mt-0.5">Report</div>
